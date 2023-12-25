@@ -1,26 +1,54 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
+using StokTakipWebApi.Auth;
 using StokTakipWebApi.Models;
 using StokTakipWebApi.Protocol;
 
 namespace StokTakipWebApi.Controllers
 {
     [ApiController]
+    [Authorize]
     [Route("api/v1/[action]")]
     public class StokTakipController : Controller
     {
         StokTakipDbContext context = new StokTakipDbContext();
 
+        [AllowAnonymous]
         [HttpGet]
         public string Test()
         {
             return "Api ile Bağlantı çalıştı";
         }
 
+        [AllowAnonymous]
+        [HttpPost]
+        public ApiCevap Login(string kullaniciAdi, string parola)
+        {
+            ApiCevap cevap = new ApiCevap();
+            var kullanici = context.TblKullanicilars.FirstOrDefault(x => x.KullaniciAd == kullaniciAdi &&
+            x.Parola == parola);
+
+            if(kullanici == null)
+            {
+                cevap.BasariliMi = false;
+                cevap.HataMesaji = "Kullanıcı Adı yada Parola hatalı.";
+                return cevap;
+            }
+
+            string token = OturumYoneticisi.BuildToken(kullanici);
+
+            cevap.BasariliMi = true;
+            cevap.Data = token;
+            return cevap;
+        }
+
+
         [HttpGet]
         public ApiCevap KullanicilariGetir()
         {
             ApiCevap cevap = new ApiCevap();
+
             var list = context.TblKullanicilars.ToList();
 
             cevap.BasariliMi = true;
