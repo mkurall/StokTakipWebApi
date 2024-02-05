@@ -129,6 +129,91 @@ namespace StokTakipWebApi.Controllers
 
             return cevap;
         }
+
+        [HttpGet]
+        public ApiCevap UrunleriGetir()
+        {
+            ApiCevap cevap = new ApiCevap();
+            var list = context.TblUrunlers.ToList();
+            cevap.BasariliMi = true;
+            cevap.Data = list;
+
+            return cevap;
+        }
+
+        [HttpPost]
+        public ApiCevap UrunEkle(string kod, int kategoriId, string ad, int birimId, string aciklama)
+        {
+            ApiCevap cevap = new ApiCevap();
+            TblUrunler urun = new TblUrunler()
+            {
+                UrunKodu = kod,
+                KategoriId = kategoriId,
+                UrunAd = ad,
+                BirimId = birimId,
+                UrunAciklama = aciklama
+            };
+
+            context.TblUrunlers.Add(urun);
+            context.SaveChanges();
+
+            cevap.BasariliMi = true;
+            cevap.Data = urun;
+
+            return cevap;
+        }
+
+        [HttpPost]
+        public ApiCevap UrunSil(int urunId)
+        {
+            ApiCevap cevap = new ApiCevap();
+
+            var urun = context.
+                TblUrunlers.FirstOrDefault(x => x.UrunId == urunId);
+
+            if (urun == null)//olmayan bir kategoriyi silemem
+            {
+                cevap.BasariliMi = false;
+                cevap.HataMesaji = "Olmayan bir urunId gönderdiniz.";
+                return cevap;
+            }
+
+            context.TblUrunlers.Remove(urun);
+            context.SaveChanges();
+            cevap.BasariliMi = true;
+
+            return cevap;
+
+        }
+
+        [HttpPost]
+        public ApiCevap UrunGuncelle(int urunId, string kod, int kategoriId, string ad, int birimId, string aciklama, float minStok, float maksStok)
+        {
+            ApiCevap cevap = new ApiCevap();
+
+            var urun = context.TblUrunlers.FirstOrDefault(x => x.UrunId == urunId);
+
+            if (urun == null)//olmayan bir kategoriyi güncelleyemem
+            {
+                cevap.BasariliMi = false;
+                cevap.HataMesaji = "Olmayan bir UrunId gönderdiniz.";
+                return cevap;
+            }
+
+            urun.UrunKodu = kod;
+            urun.KategoriId = kategoriId;
+            urun.BirimId = birimId;
+            urun.UrunAd = ad;
+            urun.UrunAciklama = aciklama;
+            urun.MinStok = minStok;
+            urun.MaksStok = maksStok;
+
+            context.SaveChanges();
+            cevap.BasariliMi = true;
+            cevap.Data = urun;
+
+            return cevap;
+        }
     }
 
 }
