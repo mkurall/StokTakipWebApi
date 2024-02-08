@@ -4,6 +4,7 @@ using Newtonsoft.Json;
 using StokTakipWebApi.Auth;
 using StokTakipWebApi.Models;
 using StokTakipWebApi.Protocol;
+using System.Security.Claims;
 
 namespace StokTakipWebApi.Controllers
 {
@@ -33,6 +34,7 @@ namespace StokTakipWebApi.Controllers
             {
                 cevap.BasariliMi = false;
                 cevap.HataMesaji = "Kullanıcı Adı yada Parola hatalı.";
+                //cevap.Data = null 
                 return cevap;
             }
 
@@ -53,6 +55,38 @@ namespace StokTakipWebApi.Controllers
 
             cevap.BasariliMi = true;
             cevap.Data = list;
+
+            return cevap;
+        }
+
+        [HttpPost]
+        public ApiCevap KullaniciEkle(string kullaniciAd, string parola, int yetki)
+        {
+
+            int user_yetki = Convert.ToInt32(User.Claims.Where(c => c.Type == "yetki").Select(c => c.Value).FirstOrDefault());
+            
+            ApiCevap cevap = new ApiCevap();
+
+            if(yetki != 0)//Yönetici Değilse
+            {
+                cevap.BasariliMi = false;
+                cevap.HataMesaji = "Bu işlem için yetkiniz yok.";
+                return cevap;
+            }
+
+
+            TblKullanicilar kullanici = new TblKullanicilar()
+            {
+                KullaniciAd = kullaniciAd,
+                Parola = parola,
+                Yetki = yetki
+            };
+
+            context.TblKullanicilars.Add(kullanici);
+            context.SaveChanges();
+
+            cevap.BasariliMi = true;
+            cevap.Data = kullanici;
 
             return cevap;
         }
@@ -214,6 +248,92 @@ namespace StokTakipWebApi.Controllers
 
             return cevap;
         }
+
+
+        [HttpGet]
+        public ApiCevap MusterileriGetir()
+        {
+            ApiCevap cevap = new ApiCevap();
+            var list = context.TblMusterilers.ToList();
+            cevap.BasariliMi = true;
+            cevap.Data = list;
+
+            return cevap;
+        }
+
+        [HttpPost]
+        public ApiCevap MusteriEkle(string firmaAdi, string yetkiliAdSoyad, string telefon, string mail, string adres)
+        {
+            ApiCevap cevap = new ApiCevap();
+
+            TblMusteriler musteri = new TblMusteriler()
+            {
+                FirmaAdi = firmaAdi,
+                YetkiliAdSoyad = yetkiliAdSoyad,
+                Telefon = telefon,
+                Mail = mail,
+                Adres = adres
+            };
+
+            context.TblMusterilers.Add(musteri);
+            context.SaveChanges();
+
+            cevap.BasariliMi = true;
+            cevap.Data = musteri;
+
+            return cevap;
+        }
+
+        [HttpPost]
+        public ApiCevap MusteriGuncelle(int musteriId, string firmaAdi, string yetkiliAdSoyad, string telefon, string mail, string adres)
+        {
+            ApiCevap cevap = new ApiCevap();
+
+            var musteri = context.TblMusterilers.FirstOrDefault(x => x.MusteriId == musteriId);
+
+            if (musteri == null)//olmayan bir müşteri güncelleyemem
+            {
+                cevap.BasariliMi = false;
+                cevap.HataMesaji = "Olmayan bir MusteriId gönderdiniz.";
+                return cevap;
+            }
+
+            musteri.FirmaAdi = firmaAdi;
+            musteri.YetkiliAdSoyad = yetkiliAdSoyad;
+            musteri.Telefon = telefon;
+            musteri.Mail = mail;
+            musteri.Adres = adres;
+           
+            context.SaveChanges();
+            cevap.BasariliMi = true;
+            cevap.Data = musteri;
+
+            return cevap;
+        }
+
+        [HttpPost]
+        public ApiCevap MusteriSil(int musteriId)
+        {
+            ApiCevap cevap = new ApiCevap();
+
+            var musteri = context.
+                TblMusterilers.FirstOrDefault(x => x.MusteriId == musteriId);
+
+            if (musteri == null)//olmayan bir musteri silemem
+            {
+                cevap.BasariliMi = false;
+                cevap.HataMesaji = "Olmayan bir MusteriId gönderdiniz.";
+                return cevap;
+            }
+
+            context.TblMusterilers.Remove(musteri);
+            context.SaveChanges();
+            cevap.BasariliMi = true;
+
+            return cevap;
+
+        }
+
     }
 
 }
